@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>dokumente</title>
+  <link rel="stylesheet" href="/bs4/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/assets/fonts/font-awesome.min.css">
+  <link rel="stylesheet" href="/assets/css/loading.css">
+  <script src="/assets/js/jquery.min.js"></script>
+  <script src="/bs4/js/bootstrap.min.js"></script>
+  <script src="/assets/js/moment-with-locales.js"></script>
+
+</head>
+<body>
+  <nav class="navbar navbar-light bg-light navbar-expand-lg">
+    <a class="navbar-brand" href="#" style="font-weight: bold;">ebuchhaltung</a><button class="navbar-toggler" data-toggle="collapse" data-target="#navcol-1"><span class="sr-only">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" id="navcol-1">
+      <ul class="nav navbar-nav mr-auto">
+        <li class="nav-item px-3 active" role="presentation" style="display:none;"><a class="nav-link" href="dokument.html">Dokumente</a></li>
+        <li class="nav-item px-3" role="presentation" style="display:none;"><a class="nav-link" href="journal.html">Journal</a></li>
+        <li class="nav-item px-3" role="presentation" style="display:none;"><a class="nav-link" href="report.html">Reports</a></li>
+      </ul>
+    </div>
+  </nav>
+  <div class="container">
+    <div style="display: flex;justify-content: space-between;">
+      <form action="/api/dokument/neu" enctype="multipart/form-data" method="post">
+        <span class="custom-file">
+          <input type="file" class="custom-file-input" id="dok" name="dok">
+          <label class="custom-file-label" for="dok" id="dokLabel">Choose file</label>
+        </span>
+        <input type="submit">
+      </form>
+      <span>
+        <button class="btn btn-outline-primary btn-sm" data-toggle="modal" data-target="#DokumentModal">neues Dokument</button>          
+      </span>
+    </div>
+    <div id="dokumente">
+    </div>
+  </div>
+    <script>
+    function upload(event){
+      event.preventDefault();
+      // fetch FileList object
+      let files = event.target.files || event.dataTransfer.files;
+      let file = files[0];
+      document.querySelector('#dokLabel').textContent="uploading file ...";
+      if(file.size>0){
+        fetch("/api/dokument",{method:'PUT',headers: { "Content-Type": "application/octet-stream"}, 
+          body:file}).then(data=>{
+          document.querySelector('#dok').classList.add("is-valid");
+          document.querySelector('#dokLabel').textContent=file.name;
+        });
+      }
+    }
+    function initDokument(dokumente){
+      let str="";
+      for(let idx=0;idx<dokumente.length;idx++){
+        let dokument = dokumente[idx];
+        str+=`<div class="card border-secondary mb-1" id="${dokument.id}">
+        <h5 class="card-header" style="display: flex;justify-content: space-between;">
+          <span>
+            <span class="badge badge-primary">${dokument.anzahl_positionen}</span>
+            <span style="font-weight: normal;">${dokument.beschreibung==""?dokument.datum.substring(0,10)+": "+dokument.dateiname : dokument.beschreibung}</span>
+          </span>
+          <span style="text-align: right;">
+            <button class="btn btn-outline-primary btn-sm" onclick="expandDokument(event)" expanded>++</button>
+            <button class="btn btn-outline-primary btn-sm d-none" onclick="collapseDokument(event)" collapsed>--</button>
+            <button class="btn btn-outline-danger btn-sm" onclick="deleteDokument(event)">löschen</button>
+          </span>
+        </h5>
+        <div class="card-body d-none" collapsed>
+          <div style="display:flex;justify-content:center;">
+            <iframe src="/api/dokument/${dokument.id}/raw" style="width:50%;"></iframe>
+            <form style="width:50%;">
+              <div class="form-group">
+                <label for="dokDatum">Datum</label>
+                <input type="datetime-local" class="form-control" id="dokDatum" value="${moment(dokument.datum).format("YYYY-MM-DDTHH:mm")}">
+              </div>
+              <div class="form-group">
+                <label for="dokBeschreibung">Beschreibung</label>
+                <input type="text" class="form-control" id="dokBeschreibung" value="${dokument.beschreibung}">
+              </div>
+              <div class="form-group">
+                <label for="dokStatus">Status</label>
+                <select class="form-control" id="dokStatus">
+                  <option ${dokument.status=="entwurf"?"selected":""}>entwurf</option>
+                  <option ${dokument.status=="aktiv"?"selected":""}>aktiv</option>
+                  <option ${dokument.status=="gelöscht"?"selected":""}>gelöscht</option>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-sm btn-outline-primary">speichern</button>
+            </form>
+          </div>
+        </div>
+        <div class="card-body d-none" collapsed>
+              <button class="btn btn-outline-danger btn-sm" onclick="positionAnlegen(event)">Position Anlegen</button>
+        </div>
+        <div class="card-body d-none" collapsed id="doc${dokument.id}_positionen">
+        </div>
+        </div>`;
+      }
+      document.querySelector("#dokumente").innerHTML=str;
+    }
+    function initPosition(positionen){
+      let str="";
+      for(let idx=0;idx<positionen.length;idx++){
+        let position = positionen[idx];
+        str+=`<div class="card">
+            <div class="card-header">
+              ${position.beschreibung}
+            </div>
+            <div class="card-body">
+              <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                  <span class="input-group-text" style="min-width: 10em;">Beschreibung</span>
+                </div>
+                <input type="text" class="form-control" id="beschreibung">
+              </div>
+              <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                  <span class="input-group-text" style="min-width: 10em;">Datum</span>
+                </div>
+                <input type="date" class="form-control" id="datum" value="${moment(position.datum).format("YYYY-MM-DD")}">
+              </div>
+              <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                  <span class="input-group-text" style="min-width: 10em;">brutto</span>
+                </div>
+                <input type="number" class="form-control" id="brutto" value="${position.brutto}">
+              </div>
+              <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                  <span class="input-group-text" style="min-width: 10em;">netto</span>
+                </div>
+                <input type="number" class="form-control" id="netto" value="${position.netto}">
+              </div>
+              <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                  <span class="input-group-text" style="min-width: 10em;">steuer</span>
+                </div>
+                <input type="number" class="form-control" id="steuer" value="${position.steuer}">
+              </div>
+            </div>
+          </div>`;
+      }
+      if(positionen.length>0){
+        document.querySelector("#doc"+positionen[0].dokument_id+"_positionen").innerHTML=str;
+      }
+    }
+    function expandDokument(event){
+      event.preventDefault();
+      let el = event.target.parentNode.parentNode.parentNode;
+      let collapsedElements = el.querySelectorAll("*[collapsed]");
+      for(var idx=0;idx<collapsedElements.length;idx++){
+        collapsedElements[idx].classList.remove('d-none');
+      }
+      let expandedElements = el.querySelectorAll("*[expanded]");
+      for(var idx=0;idx<expandedElements.length;idx++){
+        expandedElements[idx].classList.add('d-none');
+      }
+      fetch(`/api/dokument/${el.id}/position`).then(resp=>resp.json()).then(initPosition);
+    }
+    function collapseDokument(event){
+      event.preventDefault();
+      let el = event.target.parentNode.parentNode.parentNode;
+      let collapsedElements = el.querySelectorAll("*[collapsed]");
+      for(var idx=0;idx<collapsedElements.length;idx++){
+        collapsedElements[idx].classList.add('d-none');
+      }
+      let expandedElements = el.querySelectorAll("*[expanded]");
+      for(var idx=0;idx<expandedElements.length;idx++){
+        expandedElements[idx].classList.remove('d-none');
+      }
+
+    }
+    function positionAnlegen(event){
+      let dokEl = event.target.parentNode.parentNode;
+      event.preventDefault();
+      fetch(`/api/dokument/${dokEl.id}/position`,{method: "POST"}).then(resp=>resp.json()).then(initPosition);
+    }
+    //show spinner
+    document.querySelector("#dokumente").innerHTML=`<div class="sapi-loading-container"><div class="sapi-loading"></div></div>`;
+    fetch('/api/dokument').then(resp=>resp.json()).then(initDokument);
+    </script> 
+</body>
+
+</html>

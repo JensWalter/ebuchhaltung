@@ -1,0 +1,419 @@
+openapi: 3.0.1
+info:
+  title: test
+  version: 1.0.0
+servers:
+- url: https://whatever.com/
+security:
+  - ApiKeyAuth: []
+paths:
+  /api/dokument:
+    get:
+      tags:
+      - Dokument
+      summary: listet bestehende Dokumente
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dokumente'
+  /dokument/{DokumentID}:
+    put:
+      tags:
+      - Dokument
+      summary: Ändert ein bestendes Dokument
+      parameters:
+      - name: DokumentID
+        in: path
+        description: ID des Dokumentes
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Dokument'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    delete:
+      tags:
+      - Dokument
+      summary: Löscht ein bestendes Dokument
+      parameters:
+      - name: DokumentID
+        in: path
+        description: ID des Dokumentes
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+  /api/dokument/neu:
+    post:
+      tags:
+      - Dokument
+      summary: Hinzufügen eines neuen Dokumentes
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                dok:
+                  type: string
+                  format: binary
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+  /dokument/{DokumentID}/position/{PositionID}:
+    put:
+      tags:
+      - Position
+      summary: Ändert eine bestende Position
+      parameters:
+      - name: DokumentID
+        in: path
+        description: ID des Dokumentes
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: PositionID
+        in: path
+        description: ID der Position innerhalb des Dokumentes
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Position'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    delete:
+      tags:
+      - Position
+      summary: Löschen einer Position
+      parameters:
+      - name: DokumentID
+        in: path
+        description: ID des Dokumentes
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: PositionID
+        in: path
+        description: ID der Position innerhalb des Dokumentes
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+  /api/dokument/{DokumentID}/position:
+    get:
+      tags:
+      - Position
+      summary: Listet alle Positionen zu einem Dokument
+      parameters: 
+      - name: DokumentID
+        in: path
+        description: ID des Dokumentes
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Positionen'
+    post:
+      tags:
+      - Position
+      summary: Hinzugfügen einer neuen Position
+      parameters: 
+      - name: DokumentID
+        in: path
+        description: ID des Dokumentes
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+  /dokument/{DokumentID}/position:
+    post:
+      tags:
+      - Position
+      summary: Hinzufügen einer neuen Position
+      parameters:
+      - name: DokumentID
+        in: path
+        description: ID des Dokumentes
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Position'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+  /buchungskonten:
+    get:
+      tags:
+      - Stammdaten
+      summary: Liefert alle verfügbaren Buchungskonten
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Buchungkonten'
+  /buchung:
+    post:
+      tags:
+      - Buchung
+      summary: Hinzufügen einer Buchung
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Buchung'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    get:
+      tags:
+      - Buchung
+      summary: Liefert all Buchungen
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Buchungen'
+components:
+  schemas:
+    Dokumente:
+      type: array
+      items:
+        $ref: '#/components/schemas/Dokument'
+    Dokument:
+      type: object
+      properties:
+        ID:
+          type: string
+          format: uuid
+        datum:
+          type: string
+          format: date-time
+        inhalt:
+          type: string
+          format: base64
+        anhang:
+          type: array
+          items:
+            type: string
+            description: referenziert weitere Dokumente
+            format: uuid
+        status:
+          type: string
+        beschreibung:
+          type: string
+        hinweis:
+          type: array
+          items:
+            $ref: '#/components/schemas/Hinweis'
+    Hinweis:
+      type: object
+      properties:
+        name:
+          type: string
+        wert:
+          type: string
+    Buchungkonten:
+      type: array
+      items:
+        $ref: '#/components/schemas/Buchungskonto'
+    Buchungskonto:
+      type: object
+      properties:
+        nummer:
+          type: integer
+          format: int32
+        nummernstamm:
+          type: integer
+          format: int32
+        typ:
+          type: string
+        subtyp:
+          type: string
+        beschreibung:
+          type: string
+    Positionen:
+      type: array
+      items:
+        $ref: '#/components/schemas/Position'
+    Position:
+      type: object
+      properties:
+        version:
+          type: integer
+          format: int32
+        kontakt:
+          $ref: '#/components/schemas/Kontakt'
+        datum:
+          type: string
+          format: date-time
+        typ:
+          type: string
+        hinweis:
+          type: array
+          items:
+            $ref: '#/components/schemas/Hinweis'
+        beschreibung:
+          type: string
+        brutto:
+          type: number
+          format: float
+        netto:
+          type: number
+          format: float
+        steuer:
+          type: number
+          format: float
+        status:
+          type: string
+    Kontakt:
+      type: object
+      properties:
+        vorname:
+          type: string
+        nachname:
+          type: string
+        firmenname:
+          type: string
+        strasse:
+          type: string
+        postleitzahl:
+          type: integer
+          format: int32
+        stadt:
+          type: string
+        land:
+          type: string
+        steuernummer:
+          type: string
+        steuerid:
+          type: string
+        status:
+          type: string
+          enum: [ active, deleted ]
+    Buchungen:
+      type: array
+      items:
+        $ref: '#/components/schemas/Buchung'
+    Buchung:
+      type: object
+      properties:
+        ID:
+          type: string
+          format: uuid
+        buchungsdatum:
+          type: string
+          format: date-time
+        aenderungsdatum:
+          type: string
+          format: date-time
+        gegenbuchung:
+          type: string
+          format: uuid
+        konto:
+          type: integer
+          format: int32
+        betrag:
+          type: number
+          format: double
+        beschreibung:
+          type: string
+        status:
+          type: string
+          description: |
+            draft can be edited, deleted or made active, 
+            deleted can no longer be edited, 
+            active can no longer be edited
+          enum: [ draft, active, deleted ]
+        position:
+          type: string
+          format: uuid
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      name: X-API-KEY
+      in: header
