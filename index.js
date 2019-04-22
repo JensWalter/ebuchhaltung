@@ -4,6 +4,8 @@ const MULTER  = require('multer')
 
 const upload = MULTER()
 const app = EXPRESS();
+app.use(EXPRESS.static('portal'));
+app.use(EXPRESS.json());
 
 var connection = MYSQL.createPool({
   host     : 'localhost',
@@ -47,7 +49,7 @@ app.post('/api/dokument/neu',upload.single('dok'), async (req, res) => {
   await connection.execute("INSERT INTO dokument(id,dateiinhalt,dateiname,datum,status,beschreibung) VALUES( ?,?,?,?,?,?)", [uuid(),fileobj.buffer,fileobj.originalname,new Date(),"entwurf",beschreibung]);
   
   //redirect back to page
-  res.writeHead(307, {'Location': '/dokument.html'});
+  res.writeHead(303, {'Location': '/dokument.html'});
   res.send();
 });
 
@@ -62,6 +64,21 @@ app.post('/api/dokument/:dokumentid/position', async (req, res) =>{
   res.send(result[0]);
 });
 
-app.use(EXPRESS.static('portal'))
+app.get('/api/notifikation', async (req, res) => {
+  let result = await connection.query("select id,reihenfolge,name,objekt,bedingung,url from notifikation order by name");
+  res.send(result[0]);
+});
+
+app.post('/api/notifikation', async (req, res) => {
+  await connection.execute("INSERT INTO notifikation(id,reihenfolge,name,objekt,bedingung,url) VALUES( ?,?,?,?,?,?)", [uuid(),req.body.reihenfolge,req.body.name,req.body.objekt,req.body.bedingung,req.body.url]);
+  let result = await connection.query("select id,reihenfolge,name,objekt,bedingung,url from notifikation order by name");
+  res.send(result[0]);
+});
+
+app.delete('/api/notifikation/:notifikationid', async (req, res) => {
+  await connection.execute("delete from notifikation where id = ? ", [req.params.notifikationid]);
+  let result = await connection.query("select id,reihenfolge,name,objekt,bedingung,url from notifikation order by name");
+  res.send(result[0]);
+});
 
 app.listen(8080);

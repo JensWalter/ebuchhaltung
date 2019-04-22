@@ -55,6 +55,15 @@ create table buchung(
   position_id varchar(36)
 );
 
+create table notifikation(
+  id varchar(36) primary key,
+  reihenfolge integer,
+  name varchar(100),
+  objekt varchar(50),
+  bedingung varchar(1000),
+  url varchar(1000)
+);
+
 create table dokument_dokument(
   dokument_id1 varchar(36),
   dokument_id2 varchar(36)

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifikationen</title>
+  <link rel="stylesheet" href="/bs4/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/assets/fonts/font-awesome.min.css">
+  <link rel="stylesheet" href="/assets/css/loading.css">
+  <script src="/assets/js/jquery.min.js"></script>
+  <script src="/bs4/js/bootstrap.min.js"></script>
+  <script src="/assets/js/moment-with-locales.js"></script>
+
+</head>
+<body>
+  <nav class="navbar navbar-light bg-light navbar-expand-lg">
+    <a class="navbar-brand" href="#" style="font-weight: bold;">ebuchhaltung</a><button class="navbar-toggler" data-toggle="collapse" data-target="#navcol-1"><span class="sr-only">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" id="navcol-1">
+      <ul class="nav navbar-nav mr-auto">
+        <li class="nav-item px-3" role="presentation"><a class="nav-link" href="dokument.html">Dokumente</a></li>
+        <li class="nav-item px-3" role="presentation" style="display:none;"><a class="nav-link" href="journal.html">Journal</a></li>
+        <li class="nav-item px-3" role="presentation" style="display:none;"><a class="nav-link" href="report.html">Reports</a></li>
+        <li class="nav-item px-3 active" role="presentation"><a class="nav-link" href="notifikation.html">Notifikationen</a></li>
+      </ul>
+    </div>
+  </nav>
+  <div class="container">
+    <div style="display: flex;justify-content: space-between;">
+      <span>
+        <button class="btn btn-outline-primary btn-sm" data-toggle="modal" data-target="#NotifikationModal">neue Notifikation</button>          
+      </span>
+    </div>
+    <div id="notifikationen">
+    </div>
+  </div>
+    <script>
+    function initNotifikation(notifikationen){
+      let str="";
+      for(let idx=0;idx<notifikationen.length;idx++){
+        let notifikation = notifikationen[idx];
+        str+=`<div class="card border-secondary mb-1" id="${notifikation.id}">
+        <h5 class="card-header" style="display: flex;justify-content: space-between;">
+          <span>
+            <span style="font-weight: normal;">${notifikation.name}</span>
+          </span>
+          <span style="text-align: right;">
+            <button class="btn btn-outline-danger btn-sm" onclick="deleteNotifikation(event)">löschen</button>
+          </span>
+        </h5>
+        <div class="card-body">
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <span class="input-group-text" style="min-width: 10em;">Reihenfolge</span>
+            </div>
+            <input type="text" class="form-control" id="dokReihenfolge" value="${notifikation.reihenfolge}">
+          </div>
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <span class="input-group-text" style="min-width: 10em;">Objekt</span>
+            </div>
+            <input type="text" class="form-control" id="dokObjekt" value="${notifikation.objekt}">
+          </div>
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <span class="input-group-text" style="min-width: 10em;">Bedingung</span>
+            </div>
+            <input type="text" class="form-control" id="dokBedingung" value="${notifikation.bedingung}">
+          </div>
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <span class="input-group-text" style="min-width: 10em;">Url</span>
+            </div>
+            <input type="text" class="form-control" id="dokUrl" value="${notifikation.url}">
+          </div>
+        </div>
+        </div>`;
+      }
+      document.querySelector("#notifikationen").innerHTML=str;
+    }
+    function deleteNotifikation(event){
+      event.preventDefault();
+      let card = event.target.parentNode.parentNode.parentNode;
+      fetch(`/api/notifikation/${card.id}`,{method:"DELETE"}).then(resp=>resp.json()).then(initNotifikation);
+    }
+    //show spinner
+    document.querySelector("#notifikationen").innerHTML=`<div class="sapi-loading-container"><div class="sapi-loading"></div></div>`;
+    fetch('/api/notifikation').then(resp=>resp.json()).then(initNotifikation);
+    </script> 
+
+
+
+   <!-- notifikation modal -->
+   <div class="modal fade" id="NotifikationModal" tabindex="-1" role="dialog" aria-labelledby="NotifikationModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="NotifikationModalLabel">Neue Notifikation</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form>
+            <div class="form-group">
+              <label for="nameInput">Name</label>
+              <input type="text" class="form-control" id="nameInput">
+            </div>
+            <div class="form-group">
+              <label for="reihenfolgeInput">Reihenfolge</label>
+              <input type="number" class="form-control" id="reihenfolgeInput" value="100">
+            </div>
+            <div class="form-group">
+              <label for="objektInput">Objekt</label>
+              <select class="custom-select" id="objectInput">
+                <option>Dokument</option>
+                <option>Position</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="bedingungInput">Bedingung</label>
+              <input type="text" class="form-control" id="bedingungInput" placeholder="SQL basierte Bedingung: dateiinhalt is not null">
+            </div>
+            <div class="form-group">
+                <label for="urlInput">Url</label>
+                <input type="text" class="form-control" id="urlInput" placeholder="https://server/api/service5">
+              </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Schließen</button>
+          <button type="button" class="btn btn-primary" onclick="notifikationAnlegen(event)">Anlegen</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+  function notifikationAnlegen(event){
+    let notifikationEl = event.target.parentNode.parentNode;
+    event.preventDefault();
+    let nName = document.querySelector('#nameInput').value;
+    let nReihenfolge = document.querySelector('#reihenfolgeInput').value;
+    let nObjekt = document.querySelector('#objectInput').value;
+    let nBedingung = document.querySelector('#bedingungInput').value;
+    let nUrl = document.querySelector('#urlInput').value;
+    let notifikation = {
+      name: nName,
+      reihenfolge: nReihenfolge,
+      objekt: nObjekt,
+      bedingung: nBedingung,
+      url: nUrl
+    }
+    fetch(`/api/notifikation`,{method: "POST",headers:{"Content-Type":"application/json"},body: JSON.stringify(notifikation)}).then(resp=>resp.json()).then(initNotifikation);
+
+    $(function () {
+      $('#NotifikationModal').modal('toggle');
+    });
+  }
+  </script>
+</body>
+
+</html>
